@@ -1,0 +1,77 @@
+---
+# Assert that the RPM's were actually installed
+- name: Gather package facts
+  package_facts:
+    manager: auto
+- name: Stop if CARKpsmp is not installed
+  fail:
+    msg: "CARKpsmp is not installed, please view the logs for further investigation"
+  when: "'CARKpsmp' not in ansible_facts.packages"
+- name: Stop if CARKpsmp-infra is not installed
+  fail:
+    msg: "CARKpsmp-infra is not installed, please view the logs for further investigation"
+  when:
+    - (psmp_install_mode|lower == 'integrated')
+    - "'CARKpsmp' not in ansible_facts.packages"
+
+# Set facts about what we actually installed
+- set_fact:
+    psmp_exists: "{{ 'CARKpsmp' in ansible_facts.packages }}"
+    psmp_integrated_exists: "{{ 'CARKpsmp-infra' in ansible_facts.packages }}"
+    libssh_exists: "{{ 'libssh' in ansible_facts.packages }}"
+
+# Assert that the PSMP service exists
+- name: Gather service info
+  service_facts:
+  register: services_state
+- name: Validate PSMP service exists
+  fail:
+    msg: "PSMP Services does not exist, aborting"
+  when:
+    - "psmp_service_name not in services_state.ansible_facts.services"
+
+# Assert PSMP users groups and files
+- name: Assert PSMP users exists
+  getent:
+    database: passwd
+    key: "{{ item }}"
+    fail_key: true
+  with_items: "{{ psmp_users }}"
+- name: Assert PSMP groups exists
+  getent:
+    database: group
+    key: "{{ item }}"
+    fail_key: true
+  with_items: "{{ psmp_groups }}"
+- name: Assert PSMP files
+  block:
+    - name: Get file stat details
+      stat:
+        path: "{{ item }}"
+      with_items: "{{ psmp_files }}"
+      register: stat_results
+    - name: Assert file exists
+      fail:
+        msg: "{{ item }} does not exist, installation failed."
+      with_items: "{{ stat_results.results }}"
+      loop_control:
+        label: "{{ item.stat.path }}"
+      when: not item.stat.exists
+- name: Assert PSMP integrated mode files
+  block:
+    - name: Get file stat details
+      stat:
+        path: "{{ item }}"
+      with_items: "{{ psmp_integrated_files }}"
+      register: stat_results
+      when: (psmp_install_mode|lower == 'integrated')
+    - name: Assert file exists
+      fail:
+        msg: "{{ item }} does not exist, installation failed."
+      with_items: "{{ stat_results.results | default({}) }}"
+      loop_control:
+        label: "{{ item.stat.path | default({}) }}"
+      when:
+        - item.stat is defined
+        - not item.stat.exists
+        - (psmp_install_mode|lower == 'integrated')

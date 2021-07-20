@@ -1,0 +1,24 @@
+---
+# Prepare the machine to work with selinux if not already activated
+- name: Prepare selinux
+  block:
+    - name: Test to see if selinux is running
+      shell: /usr/sbin/getenforce
+      register: sestatus
+      changed_when: false
+    - name: Enable selinux
+      block:
+        - name: Install selinux pre-reqs
+          yum:
+            name: policycoreutils-python
+            state: latest
+        - name: Turn selinux on
+          selinux:
+            state: enforcing
+        - name: Reboot machine for selinux to apply
+          reboot:
+            reboot_timeout: 3600
+      when:
+        - '"Enabled" not in sestatus.stdout'
+        - '"Enforcing" not in sestatus.stdout'
+  when: psmp_with_selinux

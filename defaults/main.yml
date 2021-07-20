@@ -1,0 +1,60 @@
+---
+# Steps vars
+psmp_extract_install: false
+psmp_pre_install: false
+psmp_install: false
+psmp_post_install: false
+psmp_validate_install: false
+psmp_clean_install: false
+
+# Required vars
+accept_eula: "No"
+psmp_zip_file_path: ""
+
+# Optional vars
+psmp_install_mode: "Integrated"  # Integrated, CustomizedSSHD
+psmp_install_adbridge: true
+psmp_harden_machine: true
+psmp_ignore_checksum: false
+psmp_with_selinux: false
+psmp_configure_maintanance_users: false  # Whether to configure maintenance users and groups for the machine, note that it applies to PSMP connections aswell if integrated
+psmp_permit_root_login: false
+psmp_maintanance_users: "*"  # Set to AllowUsers in SSHD Integrated / PSMP maintanance users in customized
+psmp_maintanance_groups: "*"  # Only in integrated, sets to AllowGroups
+psmp_allow_sftp: true
+psmp_fetch_install_logs: true
+
+# Vars for running tasks
+var_tmp_path: /var/tmp
+psmp_parms_path: "{{ var_tmp_path }}/psmpparms"
+psmp_install_log_path: "{{ var_tmp_path }}/psmp_install.log"
+psmp_integrated_install_log_path: "{{ var_tmp_path }}/psmp-infra_install.log"
+psmp_service_name: "psmpsrv"
+psmp_extraction_folder: "/tmp/cyberark"
+psmp_component_folder: "psmp-installation"
+psmp_artifact_name: "psmp_installation.zip"
+psmp_users:
+  - PSMConnect
+  - PSMShadowUser
+psmp_groups:
+  - PSMConnectUsers
+  - PSMShadowUsers
+  - PSMInternalUsers
+psmp_files:
+  - /etc/init.d/psmpsrv
+  - /opt/CARKpsmp/bin/icudt58l.dat
+  - /opt/CARKpsmp/bin/psmpserver
+  - /opt/CARKpsmp/bin/envmanager
+  - /opt/CARKpsmp/bin/createcredfile
+  - /opt/CARKpsmp/components/icudt58l.dat
+  - /opt/CARKpsmp/components/ssh
+  - /opt/CARKpsmp/components/plink
+  - /opt/CARKpsmp/components/psmperformsession
+  - /opt/CARKpsmpadb/bin/icudt58l.dat
+  - /opt/CARKpsmpadb/bin/psmpadbserver
+  - /opt/CARKpsmpadb/bin/createpsmpadbenv
+  - /etc/opt/CARKpsmp/conf/basic_psmpserver.conf
+  - /etc/opt/CARKpsmpadb/conf/basic_psmpadbridge.conf
+psmp_integrated_files:
+  - /lib64/libnss_psmp.so.2
+  - /lib64/security/pam_psmp.so

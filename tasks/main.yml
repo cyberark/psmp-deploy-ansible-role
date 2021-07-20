@@ -1,0 +1,48 @@
+---
+# Validate parameters step
+- name: Validate input parameters
+  include_tasks: psmp_validate_params.yml
+
+# Extract PSMP installation step
+- name: Extract PSMP install files
+  include_tasks: psmp_extract_install.yml
+  when:
+    - psmp_extract_install
+  tags: [print_action]
+
+# Prepare for PSMP installation step
+- name: Run PSMP pre installation
+  include_tasks: psmp_pre_install.yml
+  when:
+    - psmp_pre_install
+  tags: [print_action]
+
+# Run PSMP installation step
+- name: Install PSMP
+  include_tasks: psmp_install.yml
+  when:
+    - psmp_install
+  tags: [print_action]
+
+# Validate PSMP installation step
+- name: Validate PSMP installation
+  include_tasks: psmp_validate_install.yml
+  when:
+    - psmp_validate_install
+  tags: [print_action]
+
+# Run PSMP post installation step
+- name: Run PSMP post installation
+  include_tasks: psmp_post_install.yml
+  when:
+    - psmp_post_install
+    - psmp_exists
+  tags: [print_action]
+
+# Run PSMP clean installation step
+- name: Clean PSMP from machine
+  include_tasks: psmp_clean_install.yml
+  when:
+    - psmp_clean_install
+    - psmp_exists
+  tags: [print_action]

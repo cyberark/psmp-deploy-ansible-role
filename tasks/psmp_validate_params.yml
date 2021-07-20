@@ -1,0 +1,23 @@
+---
+# Assert the EULA is set to yes
+- name: Assert EULA
+  fail:
+    msg: "You must accept the EULA in order to execute the PSMP Role"
+  when: (accept_eula|type_debug != 'bool' and accept_eula|lower != "yes") or (accept_eula|type_debug == 'bool' and not accept_eula)
+
+# Check the required installation mode for PSMP
+- name: Assert install mode is either integrated or customizedsshd
+  fail:
+    msg: "PSMP install mode must be either Integrated or CustomizedSSHD, aborting"
+  when:
+    - "psmp_install_mode|lower != 'integrated'"
+    - "psmp_install_mode|lower != 'customizedsshd'"
+
+# Set facts about the machine in regards to PSMP
+- name: Gather package facts
+  package_facts:
+    manager: auto
+- set_fact:
+    psmp_exists: "{{ 'CARKpsmp' in ansible_facts.packages }}"
+    psmp_integrated_exists: "{{ 'CARKpsmp-infra' in ansible_facts.packages }}"
+    libssh_exists: "{{ 'libssh' in ansible_facts.packages }}"

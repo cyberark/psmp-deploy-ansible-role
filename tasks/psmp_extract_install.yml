@@ -1,0 +1,38 @@
+---
+# Create the extraction folder we will work on the machine
+- name: Create folder
+  file:
+    path: "{{ psmp_extraction_folder }}"
+    state: directory
+
+# Copy the package to the PSMP machine
+- name: Copy PSMP package from local source
+  copy:
+    src: "{{ psmp_zip_file_path }}"
+    dest: "{{ psmp_extraction_folder }}/{{ psmp_artifact_name }}"
+  register: psmp_artifact
+
+# Assert that the PSMP installation package is a validated release version via the checksum
+- name: Assert PSMP checksum
+  block:
+    - name: Fail if checksum does not exists
+      fail:
+        msg: "{{ psmp_zip_file_path }} Does not exist or is malformed, Aborting the role"
+      when: not psmp_artifact.checksum
+    - name: Check if package is valid using checksum
+      fail:
+        msg: "Given package Checksum does not match, please validate that this is the right PSMP installation, Aborting the role"
+      when:
+        - not psmp_ignore_checksum
+        - psmp_artifact.checksum != psmp_sha1_checksum
+
+# Create and unzip the PSMP installation
+- name: Create component folder
+  file:
+    path: "{{ psmp_extraction_folder }}/{{ psmp_component_folder }}"
+    state: directory
+- name: Unzip the PSMP package
+  unarchive:
+    src: "{{ psmp_extraction_folder }}/{{ psmp_artifact_name }}"
+    dest: "{{ psmp_extraction_folder }}/{{ psmp_component_folder }}"
+    remote_src: yes

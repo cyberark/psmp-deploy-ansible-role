@@ -1,0 +1,32 @@
+---
+# Remove the PSMP if it exists
+- name: Gather package facts
+  package_facts:
+    manager: auto
+- name: Remove PSMP if installed
+  yum:
+    name: CARKpsmp
+    state: absent
+  when: "'CARKpsmp' in ansible_facts.packages"
+- name: Remove PSMP integrated if installed
+  yum:
+    name: CARKpsmp-infra
+    state: absent
+  when:
+    - (psmp_install_mode|lower == 'integrated')
+    - "'CARKpsmp-infra' in ansible_facts.packages"
+
+# Make sure we have no leftovers PSMP users
+- name: Make sure all users are removed if customized
+  user:
+    name: "{{ item }}"
+    state: absent
+    remove: yes
+  when: (psmp_install_mode|lower == 'customizedsshd')
+  loop: "{{ psmp_users }}"
+- name: Make sure all groups are removed if customized
+  group:
+    name: "{{ item }}"
+    state: absent
+  when: (psmp_install_mode|lower == 'customizedsshd')
+  loop: "{{ psmp_groups }}"

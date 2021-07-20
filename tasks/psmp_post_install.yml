@@ -1,0 +1,76 @@
+---
+# Fetch installation logs
+- name: Fetch installation logs
+  when: psmp_fetch_install_logs
+  block:
+    - name: Fetch PSMP installation logs
+      fetch:
+        src: "{{ psmp_install_log_path }}"
+        dest: '{{ lookup("config", "DEFAULT_LOG_PATH") | dirname }}/psmp/{{ inventory_hostname }}_psmp_install.log'
+        flat: yes
+    - name: Fetch PSMP integrated installation logs
+      fetch:
+        src: "{{ psmp_integrated_install_log_path }}"
+        dest: '{{ lookup("config", "DEFAULT_LOG_PATH") | dirname }}/psmp/{{ inventory_hostname }}_psmp_integrated_install.log'
+        flat: yes
+      when: (psmp_install_mode|lower == 'integrated')
+
+# Configure maintenance users for the machine if required
+- name: Configure SSHD maintenance users and groups
+  when: psmp_configure_maintanance_users
+  block:
+    - name: Set allowed users
+      lineinfile:
+        path: "/etc/ssh/sshd_config"
+        regex: ^(# *)?AllowUsers
+        line: AllowUsers {{ psmp_maintanance_users }}
+      when: (psmp_install_mode|lower == 'integrated')
+
+    - name: Set allowed groups
+      lineinfile:
+        path: "/etc/ssh/sshd_config"
+        regex: ^(# *)?AllowGroups
+        line: AllowGroups {{ psmp_maintanance_groups }}
+      when: (psmp_install_mode|lower == 'integrated')
+
+    - name: Set maintenance users
+      lineinfile:
+        path: "/etc/ssh/sshd_config"
+        regex: ^(# *)?PSMP_MaintenanceUsers
+        line: PSMP_MaintenanceUsers {{ psmp_maintanance_users }}
+      when: (psmp_install_mode|lower == 'customizedsshd')
+
+    - name: Restart sshd service
+      service:
+        name: sshd
+        state: restarted
+
+# Configure SFTP subsystem for SFTP connections if need be
+- name: Enable SFTP Subsystem
+  when: psmp_allow_sftp
+  block:
+    - name: Set SFTP subsystem
+      lineinfile:
+        path: "/etc/ssh/sshd_config"
+        regex: ^(# *)?Subsystem
+        line: Subsystem sftp /usr/libexec/openssh/sftp-server
+
+    - name: Restart sshd service
+      service:
+        name: sshd
+        state: restarted
+
+# Configure SSHD permit root login if need be
+- name: Permit Root Login
+  when: psmp_permit_root_login
+  block:
+    - name: Set PermitRootLogin
+      lineinfile:
+        path: "/etc/ssh/sshd_config"
+        regex: ^(# *)?PermitRootLogin
+        line: PermitRootLogin yes
+
+    - name: Restart sshd service
+      service:
+        name: sshd
+        state: restarted

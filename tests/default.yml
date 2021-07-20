@@ -1,0 +1,35 @@
+---
+- hosts: psmp
+  gather_facts: yes
+  tasks:
+    # Download the PSMP release from some bucket
+    - name: Download package from s3
+      aws_s3:
+        bucket: ofir-devel-bucket
+        object: "PSMSSH-RHELinux-Intel64-11.07.0.10.zip"
+        dest: "/tmp/psmp.zip"
+        mode: get
+      delegate_to: localhost
+
+    # Run the PSMP deployment role
+    - name: Get roles directory dirname
+      set_fact:
+        roles_dirname: "{{ playbook_dir | dirname | basename }}"
+    - name: PSMP Deployment
+      include_role:
+        name: "{{ roles_dirname }}"
+      vars:
+        - psmp_extract_install: true
+        - psmp_pre_install: true
+        - psmp_install: true
+        - psmp_post_install: true
+        - psmp_validate_install: true
+        - psmp_clean_install: true
+        - psmp_install_mode: "Integrated"
+        - psmp_install_adbridge: true
+        - psmp_harden_machine: true
+        - psmp_ignore_checksum: false
+        - psmp_with_selinux: true
+        - accept_eula: "Yes"
+        - psmp_zip_file_path: "/tmp/psmp.zip"
+        - psmp_fetch_install_logs: true

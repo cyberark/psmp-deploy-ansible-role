@@ -1,0 +1,9 @@
+---
+- name: Get file stat details
+  stat:
+    path: "{{ item }}"
+  register: st
+- name: Assert file exists
+  fail:
+    msg: "{{ item }} does not exist, installation failed."
+  when: not st.exists

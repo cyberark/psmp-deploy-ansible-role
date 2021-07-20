@@ -1,0 +1,7 @@
+# ignore *.retry files
+*.retry
+.kitchen.local.yml
+.kitchen/
+tests/logs
+tests/inventory/hosts
+.idea/*

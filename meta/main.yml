@@ -1,0 +1,23 @@
+---
+galaxy_info:
+  author:
+    - Ofir Iluz
+  description: Installs CyberArk PSM-SSH Proxy Server
+  company: CyberArk
+  license: Apache2
+
+  min_ansible_version: 2.5
+
+  platforms:
+    - name: EL
+      versions:
+        - 6
+        - 7
+
+  galaxy_tags:
+    - psm-ssh
+    - psmp
+    - cyberark
+    - security
+
+dependencies: []

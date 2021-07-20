@@ -1,0 +1,89 @@
+---
+# Gather the needed RPM paths to install
+- name: Gather PSMP Install Information
+  block:
+    - name: Find psmp integrated rpm full name
+      find:
+        paths: "{{ psmp_extraction_folder }}/{{ psmp_component_folder }}/IntegratedMode"
+        patterns: "*.rpm"
+      register: psmp_int_rpm_result
+    - name: Find psmp rpm full name
+      find:
+        paths: "{{ psmp_extraction_folder }}/{{ psmp_component_folder }}"
+        patterns: "*.rpm"
+      register: psmp_rpm_result
+    - name: Find psmp libssh rpm full name
+      find:
+        paths: "{{ psmp_extraction_folder }}/{{ psmp_component_folder }}/Pre-Requisites"
+        patterns: "*.rpm"
+      register: psmp_libssh_result
+
+# Configure the params file for psmp
+- name: Configure PSMP Params
+  block:
+    - name: Copy psmpparms
+      copy:
+        src: "{{ psmp_extraction_folder }}/{{ psmp_component_folder }}/psmpparms.sample"
+        remote_src: yes
+        dest: "{{ psmp_parms_path }}"
+    - name: Configure psmpparms install folder
+      replace:
+        path: "{{ psmp_parms_path }}"
+        regexp: InstallationFolder=.*
+        replace: InstallationFolder={{ psmp_extraction_folder }}/{{ psmp_component_folder }}
+    - name: Configure psmpparms integrated mode
+      replace:
+        path: "{{ psmp_parms_path }}"
+        regexp: InstallCyberArkSSHD=.*
+        replace: InstallCyberArkSSHD=Integrated
+      when: (psmp_install_mode|lower == 'integrated')
+    - name: Configure psmpparms customized sshd mode
+      replace:
+        path: "{{ psmp_parms_path }}"
+        regexp: InstallCyberArkSSHD=.*
+        replace: InstallCyberArkSSHD=Yes
+      when: (psmp_install_mode|lower == 'customizedsshd')
+    - name: Configure psmpparms EULA
+      replace:
+        path: "{{ psmp_parms_path }}"
+        regexp: AcceptCyberArkEULA=.*
+        replace: AcceptCyberArkEULA=Yes
+    - name: Configure psmpparms disable ADBridge
+      replace:
+        path: "{{ psmp_parms_path }}"
+        regexp: "#?EnableADBridge=.*"
+        replace: EnableADBridge=No
+      when: not psmp_install_adbridge
+    - name: Configure psmpparms disable hardening
+      replace:
+        path: "{{ psmp_parms_path }}"
+        regexp: "Hardening=.*"
+        replace: Hardening=No
+      when: not psmp_harden_machine
+    - name: Configure psmpparms to not register env
+      replace:
+        path: "{{ psmp_parms_path }}"
+        regexp: "#?CreateVaultEnvironment=.*"
+        replace: CreateVaultEnvironment=No
+
+# Run the installation
+- name: Install PSMP
+  block:
+    - name: Run libssh installation for ADBridge
+      yum:
+        name: "{{ psmp_libssh_result.files[0].path }}"
+        state: latest
+      when:
+        - psmp_install_adbridge
+
+    - name: Run psmp infra installation
+      yum:
+        name: "{{ psmp_int_rpm_result.files[0].path }}"
+        state: latest
+      when:
+        - (psmp_install_mode|lower == 'integrated')
+
+    - name: Run psmp installation
+      yum:
+        name: "{{ psmp_rpm_result.files[0].path }}"
+        state: latest

@@ -1,0 +1,53 @@
+---
+
+driver:
+  name: ec2
+  interface: public
+
+transport:
+  name: ssh
+  port: 22
+  connection_timeout: 10
+  connection_retries: 5
+  username: user
+  password: nopass
+  ssh_timeout: 20
+  connection_retry_sleep: 20
+
+provisioner:
+  name: ansible_push
+  chef_bootstrap_url: nil
+  remote_user: root
+  raw_arguments: "--timeout=3600"
+  ansible_config: tests/ansible.cfg
+  ansible_playbook_bin: /usr/local/bin/ansible-playbook
+  playbook: tests/default.yml
+
+platforms:
+  - name: psmp
+    driver_plugin: ec2
+    driver_config:
+      instance_type: c4.2xlarge
+      associate_public_ip: true
+      subnet_filter:
+        tag: 'Name'
+        value: 'pc-customer-oiluz10-public-subnet'
+      security_group_filter:
+        name: 'pc-customer-oiluz10-sg'
+      tags:
+        created-by: test-kitchen
+        component-type: psmp
+        kitchen-type: psmp
+        Name: pc-customer-oiluz10-psmp-roles
+      block_device_mappings:
+        - device_name: /dev/sda1
+          ebs:
+            volume_size: 30
+            delete_on_termination: true
+      image_search:
+        owner-id: 679593333241
+        name: CentOS Linux 7 x86_64*
+      user_data: tests/scripts/user_data_centos7.sh
+
+suites:
+  - name: default
