@@ -13,18 +13,18 @@
   register: psmp_artifact
 
 # Assert that the PSMP installation package is a validated release version via the checksum
-- name: Assert PSMP checksum
-  block:
-    - name: Fail if checksum does not exists
-      fail:
-        msg: "{{ psmp_zip_file_path }} Does not exist or is malformed, Aborting the role"
-      when: not psmp_artifact.checksum
-    - name: Check if package is valid using checksum
-      fail:
-        msg: "Given package Checksum does not match, please validate that this is the right PSMP installation, Aborting the role"
-      when:
-        - not psmp_ignore_checksum
-        - psmp_artifact.checksum != psmp_sha1_checksum
+#- name: Assert PSMP checksum
+#  block:
+#    - name: Fail if checksum does not exists
+#      fail:
+#        msg: "{{ psmp_zip_file_path }} Does not exist or is malformed, Aborting the role"
+#      when: not psmp_artifact.checksum
+#    - name: Check if package is valid using checksum
+#      fail:
+#        msg: "Given package Checksum does not match, please validate that this is the right PSMP installation, Aborting the role"
+#      when:
+#        - not psmp_ignore_checksum
+#        - psmp_artifact.checksum != psmp_sha1_checksum
 
 # Create and unzip the PSMP installation
 - name: Create component folder
